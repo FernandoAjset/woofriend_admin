@@ -1,33 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import 'config/theme/app_theme.dart';
+
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme().getTheme(),
       title: 'Woofriend Control',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key}) : super(key: key);
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  MyHomePageState createState() => MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  String arduinoIPAddress = '';
+class MyHomePageState extends State<MyHomePage> {
+  String arduinoIPAddress = ''; // Cambio en el valor por defecto
   bool isConnecting = false;
   bool isConnected = false;
   bool isLedOn = false;
+  bool isTextFieldEnabled =
+      true; // Bandera para habilitar o deshabilitar el TextField
+  bool showLedControls =
+      false; // Bandera para mostrar u ocultar controles de LED
 
   void connectToArduino() async {
     setState(() {
@@ -47,39 +54,54 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         isConnecting = false;
         isConnected = response.statusCode == 200;
+        isTextFieldEnabled = !isConnected;
+        showLedControls = isConnected;
       });
 
       if (isConnected) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Conexión Exitosa'),
-              content: Text(
-                  'Se ha conectado al Arduino correctamente.\n\nRespuesta: ${response.body}'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Cerrar'),
-                ),
-              ],
-            );
-          },
-        );
-
+        showSuccessDialog(response.body);
         setState(() {
           isLedOn = response.body.contains('ON');
         });
       }
     } catch (error) {
-      print(error);
       setState(() {
         isConnecting = false;
         isConnected = false;
+        isTextFieldEnabled = true;
+        showLedControls = false;
       });
     }
+  }
+
+  void showSuccessDialog(String response) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Conexión Exitosa'),
+          content: Text(
+            'Se ha conectado al Arduino correctamente.\n\nRespuesta: $response',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void disconnectToArduino() {
+    setState(() {
+      isConnected = false;
+      showLedControls = false;
+      isTextFieldEnabled = true;
+    });
   }
 
   void toggleLed(bool isOn) async {
@@ -87,6 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
         arduinoIPAddress, 'toggleLed', {'state': isOn ? 'ON' : 'OFF'}));
 
     if (response.statusCode == 200) {
+      isOn = response.body.contains('ON');
       setState(() {
         isLedOn = isOn;
       });
@@ -97,43 +120,56 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Woofriend Control'),
+        title: const Center(child: Text('Woofriend Control')),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
+            const Text(
               'Administrador: Woofriend',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
               onChanged: (value) {
                 arduinoIPAddress = value;
               },
-              decoration: InputDecoration(
+              enabled:
+                  isTextFieldEnabled, // Habilitar o deshabilitar el TextField
+              decoration: const InputDecoration(
                 labelText: 'Dirección IP del Arduino',
                 hintText: 'Ej. 192.168.1.100',
               ),
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: isConnecting ? null : connectToArduino,
-              child:
-                  isConnecting ? CircularProgressIndicator() : Text('Conectar'),
-            ),
-            SizedBox(height: 20),
-            if (isConnected)
+            const SizedBox(height: 20),
+            isConnected
+                ? FilledButton.icon(
+                    onPressed: isConnecting ? null : disconnectToArduino,
+                    icon: const Icon(Icons.power_off_rounded),
+                    label: isConnecting
+                        ? const CircularProgressIndicator()
+                        : const Text('Desconectar'),
+                  )
+                : FilledButton.icon(
+                    onPressed: isConnecting ? null : connectToArduino,
+                    icon: const Icon(Icons.power_outlined),
+                    label: isConnecting
+                        ? const CircularProgressIndicator()
+                        : const Text('Conectar'),
+                  ),
+            const SizedBox(height: 20),
+            if (showLedControls) // Mostrar controles de LED si está conectado
               Column(
                 children: [
-                  ElevatedButton(
-                    onPressed: () => toggleLed(true),
-                    child: Text('Encender LED'),
+                  Switch(
+                    value: isLedOn,
+                    onChanged: toggleLed,
                   ),
-                  ElevatedButton(
-                    onPressed: () => toggleLed(false),
-                    child: Text('Apagar LED'),
+                  Icon(
+                    isLedOn ? Icons.lightbulb : Icons.lightbulb_outline,
+                    size: 50,
+                    color: isLedOn ? Colors.orange : Colors.grey,
                   ),
                 ],
               ),
