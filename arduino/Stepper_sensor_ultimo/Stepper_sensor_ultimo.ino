@@ -1,6 +1,5 @@
 #include <NewPing.h>
 #include <CheapStepper.h>
-#include <SoftwareSerial.h>
 
 #define TRIGGER_PIN 2
 #define ECHO_PIN 3
@@ -12,7 +11,6 @@
 const int trigPinCheckFillLevel = 12;
 const int echoPinPinCheckFillLevel = 13;
 const int esp8266PinCheckFillLevel = 5;
-SoftwareSerial esp8266Serial(2, 5); // RX, TX - Crea un puerto serial virtual en los pines 2 (RX) y 5 (TX)
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 
@@ -24,9 +22,7 @@ bool isBussy = false;
 const int pinRemoto = 4;
 
 void setup() {
-  Serial.begin(9600);
-  esp8266Serial.begin(9600); // Inicializa la comunicación serial con el ESP8266
-
+  Serial.begin(9600);  // Inicializa la comunicación serie en el puerto hardware del Arduino
   pinMode(TRIGGER_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
@@ -35,7 +31,6 @@ void setup() {
 
   pinMode(trigPinCheckFillLevel, OUTPUT);
   pinMode(echoPinPinCheckFillLevel, INPUT);
-  pinMode(esp8266PinCheckFillLevel, OUTPUT);
 
   pinMode(pinRemoto, INPUT);
   stepper.setRpm(12);
@@ -119,10 +114,8 @@ void sendCheckFillLevel() {
   Serial.print("Porcentaje: ");
   Serial.println(porcentaje);
 
-  // Envía el porcentaje al ESP8266 a través de la comunicación serial virtual
-  esp8266Serial.print(porcentaje);
-  esp8266Serial.print('\n'); // Agrega una nueva línea para indicar el final del dato
+  // Envía el porcentaje al ESP8266 a través de la comunicación serie
+  Serial.write(porcentaje); // Envía el porcentaje al ESP8266
 
   delay(1000);
 }
-

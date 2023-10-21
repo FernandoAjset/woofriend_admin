@@ -43,59 +43,57 @@ void loop() {
         if (request.indexOf("GET /status") != -1) {
           sendStatusResponse(client);
         }
-          if (request.indexOf("GET /deposit_capacity") != -1) {
-            checkFillingLevel(client);
-          } else if (request.indexOf("GET /openDoor") != -1) {
-            digitalWrite(externalLedPin, HIGH);
-            isLedOn = true;
-            delay(2000);
-            sendStatusResponse(client);
-          }
-          break;  // Salir del bucle después de procesar la solicitud
+        if (request.indexOf("GET /deposit_capacity") != -1) {
+          checkFillingLevel(client);
+        } else if (request.indexOf("GET /openDoor") != -1) {
+          digitalWrite(externalLedPin, HIGH);
+          isLedOn = true;
+          delay(2000);
+          sendStatusResponse(client);
         }
+        break;  // Salir del bucle después de procesar la solicitud
       }
-
-      // Lee el dato enviado desde el Arduino
-      while (Serial.available()) {
-        porcentajeDesdeArduino = Serial.parseInt();
-      Serial.println("Llenado: ");
-      Serial.println(porcentajeDesdeArduino);
-      }
-
-      client.stop();
-      Serial.println("Respuesta terminada");
     }
+
+    // Lee el dato enviado desde el Arduino a través de Serial
+    while (Serial.available()) {
+      porcentajeDesdeArduino = Serial.read();
+      Serial.print("Porcentaje desde Arduino: ");
+      Serial.println(porcentajeDesdeArduino);
+    }
+    client.stop();
+    Serial.println("Respuesta terminada");
   }
+}
 
-  void checkFillingLevel(WiFiClient client) {
-    digitalWrite(externalLedPin, LOW);
+void checkFillingLevel(WiFiClient client) {
+  digitalWrite(externalLedPin, LOW);
 
-    // Crea un objeto JSON con el porcentaje
-    StaticJsonDocument<200> jsonDocument;
-    jsonDocument["depositPercentage"] = porcentajeDesdeArduino;
+  // Crea un objeto JSON con el porcentaje
+  StaticJsonDocument<200> jsonDocument;
+  jsonDocument["depositPercentage"] = porcentajeDesdeArduino;
 
-    // Serializa el JSON en una cadena
-    String jsonResponse;
-    serializeJson(jsonDocument, jsonResponse);
+  // Serializa el JSON en una cadena
+  String jsonResponse;
+  serializeJson(jsonDocument, jsonResponse);
 
-    // Construye la respuesta HTTP con el JSON
-    String response = "HTTP/1.1 200 OK\r\n"
-                      "Content-Type: application/json\r\n"
-                      "\r\n"
-                      + jsonResponse;
+  // Construye la respuesta HTTP con el JSON
+  String response = "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: application/json\r\n"
+                    "\r\n"
+                    + jsonResponse;
 
-    client.print(response);
-  }
+  client.print(response);
+}
 
+void sendStatusResponse(WiFiClient client) {
+  digitalWrite(externalLedPin, LOW);
+  isLedOn = !isLedOn;
+  String status = isLedOn ? "ON" : "OFF";
+  String response = "HTTP/1.1 200 OK\r\n"
+                    "Content-type: text/plain\r\n"
+                    "\r\n"
+                    + status;
 
-  void sendStatusResponse(WiFiClient client) {
-    digitalWrite(externalLedPin, LOW);
-    isLedOn = !isLedOn;
-    String status = isLedOn ? "ON" : "OFF";
-    String response = "HTTP/1.1 200 OK\r\n"
-                      "Content-type: text/plain\r\n"
-                      "\r\n"
-                      + status;
-
-    client.print(response);
-  }
+  client.print(response);
+}
