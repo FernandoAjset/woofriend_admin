@@ -12,15 +12,18 @@ class DepositStatusScreen extends StatefulWidget {
 
 class _DepositStatusScreenState extends State<DepositStatusScreen> {
   double depositPercentage = 0.0; // Porcentaje de llenado
+  String arduinoIPAddress = '192.168.0.2'; // Cambio en el valor por defecto
 
   Future<void> fetchDepositStatus() async {
     try {
-      final response = await http.get(Uri.parse('deposit_capacity'));
+      final response =
+          await http.get(Uri.http(arduinoIPAddress, 'deposit_capacity'));
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          depositPercentage = data[
-              'depositPercentage']; // Asume que Arduino envía el porcentaje
+          depositPercentage =
+              double.parse(data['depositPercentage'].toString());
         });
       } else {
         // En caso de que la solicitud no sea exitosa, muestra un mensaje de error
