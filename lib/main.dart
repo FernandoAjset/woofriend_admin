@@ -161,18 +161,17 @@ class MyHomePageState extends State<MyHomePage> {
               Column(
                 children: [
                   ElevatedButton.icon(
-                    onPressed: isOpenDoor
-                        ? null
-                        : serveFood, // Deshabilita el botón si isOpenDoor es true
-                    icon: Icon(
-                      isOpenDoor ? Icons.lightbulb : Icons.lightbulb_outline,
+                    onPressed:
+                        serveFood, // Deshabilita el botón si isOpenDoor es true
+                    icon: const Icon(
+                      Icons.kitchen, // Icono de cocina
                       size: 50,
-                      color: isOpenDoor ? Colors.orange : Colors.grey,
+                      color: Colors.blueAccent,
                     ),
                     label: Text(
-                      isOpenDoor ? 'Puerta Abierta' : 'Servir Comida',
+                      'Servir Comida',
                       style: TextStyle(
-                        color: isOpenDoor ? Colors.orange : Colors.grey,
+                        color: isOpenDoor ? Colors.blueAccent : Colors.grey,
                       ),
                     ),
                   ),
