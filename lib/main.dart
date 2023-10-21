@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'config/theme/app_theme.dart';
+import 'screens/DepositStatusScreen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -79,8 +80,8 @@ class MyHomePageState extends State<MyHomePage> {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Conexión Exitosa'),
-          content: Text(
-            'Se ha conectado al Arduino correctamente.\n\nRespuesta: $response',
+          content: const Text(
+            'Se ha conectado al Arduino correctamente.',
           ),
           actions: [
             TextButton(
@@ -114,11 +115,26 @@ class MyHomePageState extends State<MyHomePage> {
     }
   }
 
+void navigateToDepositStatusScreen() {
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (context) => const DepositStatusScreen(),
+    ),
+  );
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Center(child: Text('Woofriend Control')),
+        actions: [
+          IconButton(
+            onPressed: isConnected?navigateToDepositStatusScreen:null,
+            icon: const Icon(Icons.storage),
+          ),
+        ],
       ),
       body: Center(
         child: Column(
