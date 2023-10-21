@@ -9,10 +9,13 @@ unsigned long startTime = 0;
 CheapStepper stepper(8,9,10,11);
   int timeDelay = 30;
 
+const int pinRemoto = 4;
+
 void setup() {
   Serial.begin(9600);
   pinMode(TRIGGER_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
+  pinMode(pinRemoto, INPUT); 
   stepper.setRpm(12);
   stepper.moveDegreesCW(0);
 }
@@ -28,7 +31,12 @@ void loop() {
 
   unsigned int distance = sonar.ping_cm();
 
-  
+  int estadoRemoto = digitalRead(pinRemoto);
+  if(estadoRemoto==HIGH)
+  {
+    Serial.println("True desde remoto");
+    openDoor();
+  }
   if (distance > 0 && distance <= 10) {
     Serial.println("Objeto detectado a menos de 10 cm.");
 
@@ -37,14 +45,17 @@ void loop() {
     Serial.println(" cm");
 
     if (millis() - startTime >= 5000) {      
-      stepper.move(false, 1024);
-      Serial.println("Objeto detectado durante 5 segundos. Inclinando el motor ");
-      delay(timeDelay); // Espera 5 segundos para inclinar el motor
-      stepper.move(true, 1024);
-
+      openDoor();
       startTime = millis(); // Reinicia el tiempo de inicio
     }
   } else {
     startTime = millis(); // Reinicia el tiempo de inicio si no se detecta un objeto
   }
+}
+
+void openDoor(){
+  stepper.move(false, 1024);
+  Serial.println("Objeto detectado durante 5 segundos. Inclinando el motor ");
+  delay(timeDelay); // Espera 5 segundos para inclinar el motor
+  stepper.move(true, 1024);
 }

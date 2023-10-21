@@ -30,11 +30,10 @@ class MyHomePageState extends State<MyHomePage> {
   String arduinoIPAddress = ''; // Cambio en el valor por defecto
   bool isConnecting = false;
   bool isConnected = false;
-  bool isLedOn = false;
+  bool isOpenDoor = false;
   bool isTextFieldEnabled =
       true; // Bandera para habilitar o deshabilitar el TextField
-  bool showLedControls =
-      false; // Bandera para mostrar u ocultar controles de LED
+  bool showControls = false; // Bandera para mostrar u ocultar controles.
 
   void connectToArduino() async {
     setState(() {
@@ -55,13 +54,13 @@ class MyHomePageState extends State<MyHomePage> {
         isConnecting = false;
         isConnected = response.statusCode == 200;
         isTextFieldEnabled = !isConnected;
-        showLedControls = isConnected;
+        showControls = isConnected;
       });
 
       if (isConnected) {
         showSuccessDialog(response.body);
         setState(() {
-          isLedOn = response.body.contains('ON');
+          isOpenDoor = response.body.contains('ON');
         });
       }
     } catch (error) {
@@ -69,7 +68,7 @@ class MyHomePageState extends State<MyHomePage> {
         isConnecting = false;
         isConnected = false;
         isTextFieldEnabled = true;
-        showLedControls = false;
+        showControls = false;
       });
     }
   }
@@ -99,19 +98,18 @@ class MyHomePageState extends State<MyHomePage> {
   void disconnectToArduino() {
     setState(() {
       isConnected = false;
-      showLedControls = false;
+      showControls = false;
       isTextFieldEnabled = true;
     });
   }
 
-  void toggleLed(bool isOn) async {
-    final response = await http.get(Uri.http(
-        arduinoIPAddress, 'toggleLed', {'state': isOn ? 'ON' : 'OFF'}));
+  void serveFood() async {
+    final response = await http.get(Uri.http(arduinoIPAddress, 'openDoor'));
 
     if (response.statusCode == 200) {
-      isOn = response.body.contains('ON');
+      isOpenDoor = response.body.contains('OFF');
       setState(() {
-        isLedOn = isOn;
+        isOpenDoor = !isOpenDoor;
       });
     }
   }
@@ -159,17 +157,24 @@ class MyHomePageState extends State<MyHomePage> {
                         : const Text('Conectar'),
                   ),
             const SizedBox(height: 20),
-            if (showLedControls) // Mostrar controles de LED si está conectado
+            if (showControls) // Mostrar controles de LED si está conectado
               Column(
                 children: [
-                  Switch(
-                    value: isLedOn,
-                    onChanged: toggleLed,
-                  ),
-                  Icon(
-                    isLedOn ? Icons.lightbulb : Icons.lightbulb_outline,
-                    size: 50,
-                    color: isLedOn ? Colors.orange : Colors.grey,
+                  ElevatedButton.icon(
+                    onPressed: isOpenDoor
+                        ? null
+                        : serveFood, // Deshabilita el botón si isOpenDoor es true
+                    icon: Icon(
+                      isOpenDoor ? Icons.lightbulb : Icons.lightbulb_outline,
+                      size: 50,
+                      color: isOpenDoor ? Colors.orange : Colors.grey,
+                    ),
+                    label: Text(
+                      isOpenDoor ? 'Puerta Abierta' : 'Servir Comida',
+                      style: TextStyle(
+                        color: isOpenDoor ? Colors.orange : Colors.grey,
+                      ),
+                    ),
                   ),
                 ],
               ),

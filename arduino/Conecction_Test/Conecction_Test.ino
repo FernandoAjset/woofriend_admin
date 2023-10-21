@@ -13,10 +13,8 @@ void setup() {
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(externalLedPin, OUTPUT); // Configurar el LED externo como salida
-
-
+  digitalWrite(externalLedPin, LOW);
   WiFi.begin(ssid, password);
-
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.println("Conectando a WiFi...");
@@ -41,13 +39,10 @@ void loop() {
         String request = client.readStringUntil('\r');
       if (request.indexOf("GET /status") != -1) {
         sendStatusResponse(client);
-      } else if (request.indexOf("GET /toggleLed?state=ON") != -1) {
+      } else if (request.indexOf("GET /openDoor") != -1) {
         digitalWrite(externalLedPin, HIGH);
         isLedOn = true;
-        sendStatusResponse(client);
-      } else if (request.indexOf("GET /toggleLed?state=OFF") != -1) {
-        digitalWrite(externalLedPin, LOW); // Apagar el LED externo
-        isLedOn = false;
+        delay(2000); 
         sendStatusResponse(client);
       }
         break; // Salir del bucle después de procesar la solicitud
@@ -63,7 +58,9 @@ void loop() {
 
 
 void sendStatusResponse(WiFiClient client) {
-  String status = isLedOn ? "LED is ON" : "LED is OFF";
+  digitalWrite(externalLedPin, LOW);
+  isLedOn=!isLedOn;
+  String status = isLedOn ? "ON" : "OFF";
   String response = "HTTP/1.1 200 OK\r\n"
                     "Content-type: text/plain\r\n"
                     "\r\n"
