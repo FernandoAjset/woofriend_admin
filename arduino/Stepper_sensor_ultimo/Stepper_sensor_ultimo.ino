@@ -41,27 +41,24 @@ void loop() {
   delayMicroseconds(10);
 
   digitalWrite(TRIGGER_PIN, LOW);
-
-
   unsigned int distanceObject = sonar.ping_cm();
+
   int distanceFillDish = distanceFilDish();
-
-  if (distanceFillDish >= 8 && distanceFillDish <= 12) {
-    Serial.println("Distancia al plato: ");
-    Serial.println(distanceFillDish);
-  } else {
-    Serial.println("Plato lleno");
-    Serial.println(distanceFillDish);
-    return;
-  }
-
-
   int estadoRemoto = digitalRead(pinRemoto);
-  if (estadoRemoto == HIGH && !isBussy) {
+
+  if (
+    (estadoRemoto == HIGH && !isBussy) 
+    && 
+    (distanceFillDish >= 8)
+  ) {
     Serial.println("Servir desde remoto");
     openDoor();
   }
-  if (distanceObject > 0 && distanceObject <= 30) {
+  else if (
+    (distanceObject > 0 && distanceObject <= 30)
+    && 
+    (distanceFillDish >= 8)
+    ) {
     Serial.print("Objeto a: ");
     Serial.print(distanceObject);
     Serial.println(" cm");
